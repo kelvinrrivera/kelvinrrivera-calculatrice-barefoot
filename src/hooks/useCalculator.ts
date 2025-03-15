@@ -23,7 +23,7 @@ export default function useCalculator() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState('');
 
-  // Navegación
+  // Navegación entre pasos
   const goToStep = (step: number) => {
     if (step < 0 || step > 4) return;
     
@@ -35,7 +35,7 @@ export default function useCalculator() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Validación
+  // Validación de cada paso
   const validateStep = (step: number): boolean => {
     setError('');
     
@@ -47,7 +47,7 @@ export default function useCalculator() {
         }
         return true;
         
-      case 1: // Longitud del pie
+      case 1: // Longueur du pied
         if (!measurements.footLength) {
           setError('Veuillez entrer la longueur de votre pied.');
           return false;
@@ -59,7 +59,7 @@ export default function useCalculator() {
         }
         return true;
       
-      case 2: // Forma de los dedos
+      case 2: // Forme des orteils
         if (!measurements.toe1Length || !measurements.toe2Length || !measurements.toe3Length) {
           setError('Veuillez entrer la longueur de tous les orteils.');
           return false;
@@ -75,7 +75,7 @@ export default function useCalculator() {
         }
         return true;
         
-      case 3: // Anchura y volumen
+      case 3: // Mesures de largeur, volume et cheville
         if (!measurements.footWidth || !measurements.footVolume || !measurements.ankleCircumference) {
           setError('Veuillez compléter toutes les mesures.');
           return false;
@@ -96,12 +96,12 @@ export default function useCalculator() {
     }
   };
 
-  // Actualización de medidas
+  // Actualización de las medidas introducidas
   const updateMeasurement = (name: string, value: string) => {
     setMeasurements(prev => ({ ...prev, [name]: value }));
   };
 
-  // Cálculo de resultados
+  // Cálculo de los resultados
   const calculateResults = () => {
     if (!validateStep(1) || !validateStep(2) || !validateStep(3)) {
       return;
@@ -115,10 +115,10 @@ export default function useCalculator() {
     const volume = parseFloat(measurements.footVolume);
     const ankle = parseFloat(measurements.ankleCircumference);
     
-    // Determinar tipo de pie
+    // Determinar el tipo de pie basado en las longitudes de los dedos
     const footType = determineFootType(toe1, toe2, toe3);
     
-    // Determinar categorías
+    // Calcular índices y determinar categorías
     const widthIndex = (width / footLength) * 100;
     const widthCategory = determineWidthCategory(widthIndex, isAdult);
     
@@ -136,7 +136,7 @@ export default function useCalculator() {
     });
   };
 
-  // Lógica para determinar el tipo de pie
+  // Lógica para determinar el tipo de pie según las longitudes de los orteils
   const determineFootType = (toe1: number, toe2: number, toe3: number) => {
     // Calcular diferencias entre dedos
     const diff12 = toe1 - toe2;
@@ -148,22 +148,16 @@ export default function useCalculator() {
     const threshold = 3;
     
     if (toe1 > toe2 && toe2 > toe3 && diff12 > threshold) {
-      // Patrón decreciente: 1 > 2 > 3 con diferencia significativa
       return FOOT_TYPES.EGYPTIEN;
     } else if (toe2 > toe1 && toe1 > toe3 && absDiff12 > threshold) {
-      // Segundo dedo más largo: 2 > 1 > 3
       return FOOT_TYPES.GREC;
     } else if (absDiff12 < threshold && absDiff23 < threshold) {
-      // Los tres primeros dedos similares
       return FOOT_TYPES.ROMAIN;
     } else if (toe1 > toe2 && absDiff23 < threshold) {
-      // Primer dedo dominante, y dedos 2 y 3 similares
       return FOOT_TYPES.GERMANIQUE;
     } else if (toe2 > toe1 && toe2 > toe3 && absDiff23 > threshold) {
-      // Segundo dedo más largo, con marcada diferencia con el tercero
       return FOOT_TYPES.CELTE;
     } else {
-      // Combina características de varios tipos
       return FOOT_TYPES.MIXTE;
     }
   };
@@ -171,8 +165,8 @@ export default function useCalculator() {
   // Determinar categoría de anchura
   const determineWidthCategory = (widthIndex: number, isAdult: boolean) => {
     const thresholds = isAdult 
-      ? [36, 39, 42] // [fin, moyen, large, très large]
-      : [39, 42, 45]; // Umbrales ajustados para niños
+      ? [36, 39, 42] // Para adulto: fin, moyen, large, très large
+      : [39, 42, 45]; // Para niños: umbrales ajustados
     
     if (widthIndex < thresholds[0]) {
       return WIDTH_CATEGORIES.NARROW;
@@ -188,8 +182,8 @@ export default function useCalculator() {
   // Determinar categoría de volumen
   const determineVolumeCategory = (volumeIndex: number, isAdult: boolean) => {
     const thresholds = isAdult 
-      ? [90, 100, 110] // [peu volumineux, moyen, volumineux, très volumineux]
-      : [95, 105, 115]; // Umbrales ajustados para niños
+      ? [90, 100, 110]
+      : [95, 105, 115];
     
     if (volumeIndex < thresholds[0]) {
       return VOLUME_CATEGORIES.LOW;
@@ -205,8 +199,8 @@ export default function useCalculator() {
   // Determinar categoría de tobillo
   const determineAnkleCategory = (ankleIndex: number, isAdult: boolean) => {
     const thresholds = isAdult 
-      ? [80, 87, 95] // [fin, moyen, large, très large]
-      : [85, 92, 100]; // Umbrales ajustados para niños
+      ? [80, 87, 95]
+      : [85, 92, 100];
     
     if (ankleIndex < thresholds[0]) {
       return ANKLE_CATEGORIES.THIN;
@@ -223,4 +217,65 @@ export default function useCalculator() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.userName || !formData.userEmail ||
+    if (!formData.userName || !formData.userEmail || !formData.consent) {
+      setError('Veuillez remplir tous les champs et accepter les conditions.');
+      return;
+    }
+    
+    // Validación de formato de email
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(formData.userEmail)) {
+      setError('Veuillez entrer une adresse email valide.');
+      return;
+    }
+    
+    try {
+      setError('');
+      const response = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.userName,
+          email: formData.userEmail,
+          footType: results.footType.name,
+          footWidth: results.widthCategory.name,
+          footVolume: results.volumeCategory.name,
+          ankleType: results.ankleCategory.name,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Une erreur est survenue lors de l\'inscription');
+      }
+      
+      // Éxito: marcar como enviado y guardar en localStorage
+      setIsSubmitted(true);
+      setError('');
+      localStorage.setItem('footCalculatorSubmitted', 'true');
+    } catch (error: any) {
+      console.error('Error submitting form:', error);
+      setError(error.message || 'Une erreur est survenue. Veuillez réessayer.');
+    }
+  };
+
+  return {
+    currentStep,
+    isAdult,
+    setIsAdult,
+    childAge,
+    setChildAge,
+    measurements,
+    updateMeasurement,
+    results,
+    formData,
+    setFormData,
+    isSubmitted,
+    error,
+    goToStep,
+    calculateResults,
+    handleSubmit,
+  };
+}
